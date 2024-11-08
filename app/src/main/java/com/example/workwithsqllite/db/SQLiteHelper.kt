@@ -7,14 +7,23 @@ import android.database.sqlite.SQLiteOpenHelper
 import com.example.workwithsqllite.Purchase
 import java.io.Serializable
 
-class SQLiteHelper(context: Context) : SQLiteOpenHelper(context, "purchase", null, 1),
-    Serializable {
+class SQLiteHelper(context: Context) : SQLiteOpenHelper(context, "purchase", null, 1), Serializable {
+    private val TABLE_NAME : String = "purchase"
+    private val CREATE_DATABASE_ENTRIES : String = """
+        CREATE TABLE $TABLE_NAME(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                amount TEXT)
+    """.trimIndent()
+    private val DELETE_ALL_FROM_DB_ENTRIES : String = """
+        DELETE FROM $TABLE_NAME
+    """.trimIndent()
+    private val SELECT_ALL_QUERY : String = """
+        SELECT * FROM $TABLE_NAME
+    """.trimIndent()
+
     override fun onCreate(db: SQLiteDatabase?) {
-        val createTable = "CREATE TABLE purchase(" +
-                " id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                " name TEXT," +
-                " amount TEXT )"
-        db?.execSQL(createTable)
+        db?.execSQL(CREATE_DATABASE_ENTRIES)
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
@@ -28,16 +37,15 @@ class SQLiteHelper(context: Context) : SQLiteOpenHelper(context, "purchase", nul
         values.put("name", name)
         values.put("amount", amount)
 
-        val success = db.insert("purchase", null, values)
+        val success = db.insert(TABLE_NAME, null, values)
         db.close()
         return success
     }
 
     fun getAllPurchase(): ArrayList<Purchase> {
         val purchaseList: ArrayList<Purchase> = ArrayList()
-        val selectQuery = "SELECT * FROM purchase"
         val db = this.readableDatabase
-        val cursor = db.rawQuery(selectQuery, null)
+        val cursor = db.rawQuery(SELECT_ALL_QUERY, null)
 
         if (cursor.moveToFirst()) {
             do {
@@ -58,24 +66,21 @@ class SQLiteHelper(context: Context) : SQLiteOpenHelper(context, "purchase", nul
         values.put("name", name)
         values.put("amount", amount)
 
-        val success = db.update("purchase", values, "id=?", arrayOf(id.toString()))
+        val success = db.update(TABLE_NAME, values, "id=?", arrayOf(id.toString()))
         db.close()
         return success
     }
 
     fun deletePurchase(id: Int): Int {
         val db = this.writableDatabase
-        val success = db.delete("purchase", "id=?", arrayOf(id.toString()))
+        val success = db.delete(TABLE_NAME, "id=?", arrayOf(id.toString()))
         db.close()
         return success
     }
 
     fun clear() {
         val db = this.writableDatabase
-
-        val clearAll = """
-            DELETE FROM purchase
-        """.trimIndent()
-        db?.execSQL(clearAll)
+        db?.execSQL(DELETE_ALL_FROM_DB_ENTRIES)
+        db.close()
     }
 }
